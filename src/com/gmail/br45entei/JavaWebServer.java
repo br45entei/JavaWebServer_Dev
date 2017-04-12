@@ -424,6 +424,8 @@ public final class JavaWebServer {//TODO Implement per-folder background color/i
 	 * remain in the cache of a connected client */
 	public static final Long DEFAULT_CACHE_MAX_AGE = Long.valueOf(604800L);
 	
+	public static volatile int VLC_NETWORK_CACHING_MILLIS = 500;
+	
 	//Options:
 	/** The socket port that this server will listen on */
 	public static volatile int listen_port = 0x50;
@@ -809,6 +811,20 @@ public final class JavaWebServer {//TODO Implement per-folder background color/i
 									} catch(NumberFormatException ignored) {
 										PrintUtil.printErrln("Option \"overrideThreadPoolSize\" was not set to a valid integer value: " + value);
 										overrideThreadPoolSize = oldOverrideThreadPoolSize;
+									}
+								} else if(key.equalsIgnoreCase("VLC_NETWORK_CACHING_MILLIS")) {
+									final int oldVLCNetworkCachingMillis = VLC_NETWORK_CACHING_MILLIS;
+									try {
+										VLC_NETWORK_CACHING_MILLIS = Integer.valueOf(value).intValue();
+										if(VLC_NETWORK_CACHING_MILLIS != -1 && (VLC_NETWORK_CACHING_MILLIS < 0 || VLC_NETWORK_CACHING_MILLIS > 10000)) {
+											PrintUtil.printErrln("Option \"VLC_NETWORK_CACHING_MILLIS\" was not set to an acceptable value(must be greater than five-hundred[500] and less than ten-thousand[10000].): " + VLC_NETWORK_CACHING_MILLIS);
+											VLC_NETWORK_CACHING_MILLIS = oldVLCNetworkCachingMillis;
+										} else {
+											PrintUtil.println("Set option \"VLC_NETWORK_CACHING_MILLIS\" to \"" + VLC_NETWORK_CACHING_MILLIS + (VLC_NETWORK_CACHING_MILLIS == -1 ? "(Disabled)" : "") + "\"!");
+										}
+									} catch(NumberFormatException ignored) {
+										PrintUtil.printErrln("Option \"VLC_NETWORK_CACHING_MILLIS\" was not set to a valid integer value: " + value);
+										VLC_NETWORK_CACHING_MILLIS = oldVLCNetworkCachingMillis;
 									}
 								} else if(key.equalsIgnoreCase("listenPort")) {
 									final int oldListen_Port = listen_port;
@@ -1216,6 +1232,7 @@ public final class JavaWebServer {//TODO Implement per-folder background color/i
 			pr.println("phpExeFilePath=" + PhpResult.phpExeFilePath);
 			pr.println("requestTimeout=" + requestTimeout);
 			pr.println("overrideThreadPoolSize=" + overrideThreadPoolSize);
+			pr.println("VLC_NETWORK_CACHING_MILLIS=" + VLC_NETWORK_CACHING_MILLIS);
 			pr.println("listenPort=" + listen_port);
 			pr.println("enableConsoleLogging=" + enableConsoleLogging);
 			pr.flush();
@@ -3449,7 +3466,9 @@ public final class JavaWebServer {//TODO Implement per-folder background color/i
 							trackList += media != null ? "\t\t\t<duration>" + Math.round(media.trackLengthDouble * 1000L) + "</duration>\r\n" : "";
 							trackList += "\t\t\t<extension application=\"http://www.videolan.org/vlc/playlist/0\">\r\n";
 							trackList += "\t\t\t\t<vlc:id>" + numOfMediaFiles + "</vlc:id>\r\n";
-							trackList += "\t\t\t\t<vlc:option>network-caching=1000</vlc:option>\r\n";
+							if(JavaWebServer.VLC_NETWORK_CACHING_MILLIS >= 250 && JavaWebServer.VLC_NETWORK_CACHING_MILLIS <= 10000) {
+								trackList += "\t\t\t\t<vlc:option>network-caching=" + Integer.toString(JavaWebServer.VLC_NETWORK_CACHING_MILLIS) + "</vlc:option>\r\n";
+							}
 							trackList += "\t\t\t</extension>\r\n";
 							trackList += "\t\t</track>\r\n";
 							numOfMediaFiles++;

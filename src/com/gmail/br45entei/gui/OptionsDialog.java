@@ -1,6 +1,7 @@
 package com.gmail.br45entei.gui;
 
 import com.gmail.br45entei.JavaWebServer;
+import com.gmail.br45entei.data.Property;
 import com.gmail.br45entei.server.data.NaughtyClientData;
 import com.gmail.br45entei.server.data.php.PhpResult;
 import com.gmail.br45entei.swt.Functions;
@@ -41,12 +42,13 @@ public class OptionsDialog extends Dialog {
 	protected Response response = Response.NO_RESPONSE;
 	protected Shell shell;
 	protected Text homeDirectory;
-	private Button btnRestoreDefaults;
+	protected Button btnRestoreDefaults;
 	protected Button btnCalculateDir;
 	protected Text directoryPageFontFace;
 	protected Text phpCGI_File;
 	protected Spinner requestTimeout;
 	protected Spinner threadPoolSize;
+	protected Spinner vlcNetworkCaching;
 	protected Spinner serverListenPort;
 	protected Text sslStorePath;
 	protected Spinner sslListenPort;
@@ -58,7 +60,7 @@ public class OptionsDialog extends Dialog {
 	protected Text adminPassword;
 	protected Text proxyUsername;
 	protected Text proxyPassword;
-	protected Button btnEnabled;
+	protected Button btnEnableOverrideThreadPool;
 	protected Composite proxySettings;
 	protected Composite adminSettings;
 	protected Composite sslSettings;
@@ -303,27 +305,27 @@ public class OptionsDialog extends Dialog {
 		final SelectionAdapter toggleOverrideListener = new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent doNotUse) {
-				OptionsDialog.this.threadPoolSize.setEnabled(OptionsDialog.this.btnEnabled.getSelection());
+				OptionsDialog.this.threadPoolSize.setEnabled(OptionsDialog.this.btnEnableOverrideThreadPool.getSelection());
 				if(!OptionsDialog.this.threadPoolSize.isEnabled()) {
 					OptionsDialog.this.threadPoolSize.setSelection(JavaWebServer.fNumberOfThreads);
 					JavaWebServer.overrideThreadPoolSize = -1;
-					OptionsDialog.this.btnEnabled.setText("Disabled");
-					OptionsDialog.this.btnEnabled.setToolTipText("Enable the override");
+					OptionsDialog.this.btnEnableOverrideThreadPool.setText("Disabled");
+					OptionsDialog.this.btnEnableOverrideThreadPool.setToolTipText("Enable the override");
 				} else {
 					JavaWebServer.overrideThreadPoolSize = OptionsDialog.this.threadPoolSize.getSelection();
-					OptionsDialog.this.btnEnabled.setText("Enabled");
-					OptionsDialog.this.btnEnabled.setToolTipText("Disable the override");
+					OptionsDialog.this.btnEnableOverrideThreadPool.setText("Enabled");
+					OptionsDialog.this.btnEnableOverrideThreadPool.setToolTipText("Disable the override");
 				}
 				JavaWebServer.updateThreadPoolSizes();
 			}
 		};
 		
-		this.btnEnabled = new Button(contents1, SWT.CHECK);
-		this.btnEnabled.setSelection(JavaWebServer.overrideThreadPoolSize != -1);
-		this.btnEnabled.addSelectionListener(toggleOverrideListener);
-		this.btnEnabled.setText(JavaWebServer.overrideThreadPoolSize != -1 ? "Enabled" : "Disabled");
-		this.btnEnabled.setToolTipText(JavaWebServer.overrideThreadPoolSize != -1 ? "Disable the override" : "Enable the override");
-		this.btnEnabled.setBounds(272, 0, 69, 21);
+		this.btnEnableOverrideThreadPool = new Button(contents1, SWT.CHECK);
+		this.btnEnableOverrideThreadPool.setSelection(JavaWebServer.overrideThreadPoolSize != -1);
+		this.btnEnableOverrideThreadPool.addSelectionListener(toggleOverrideListener);
+		this.btnEnableOverrideThreadPool.setText(JavaWebServer.overrideThreadPoolSize != -1 ? "Enabled" : "Disabled");
+		this.btnEnableOverrideThreadPool.setToolTipText(JavaWebServer.overrideThreadPoolSize != -1 ? "Disable the override" : "Enable the override");
+		this.btnEnableOverrideThreadPool.setBounds(272, 0, 69, 21);
 		
 		this.threadPoolSize = new Spinner(contents1, SWT.BORDER);
 		this.threadPoolSize.setEnabled(JavaWebServer.overrideThreadPoolSize != -1);
@@ -334,11 +336,42 @@ public class OptionsDialog extends Dialog {
 		this.threadPoolSize.addModifyListener(new ModifyListener() {
 			@Override
 			public void modifyText(ModifyEvent e) {
-				JavaWebServer.overrideThreadPoolSize = OptionsDialog.this.btnEnabled.getEnabled() ? OptionsDialog.this.threadPoolSize.getSelection() : -1;
+				JavaWebServer.overrideThreadPoolSize = OptionsDialog.this.btnEnableOverrideThreadPool.getEnabled() ? OptionsDialog.this.threadPoolSize.getSelection() : -1;
 				JavaWebServer.updateThreadPoolSizes();
 			}
 		});
 		this.threadPoolSize.setBounds(156, 0, 110, 21);
+		
+		Label lblVlcNetworkCaching = new Label(contents1, SWT.NONE);
+		lblVlcNetworkCaching.setToolTipText("Allows you to edit the `<vlc:option>network-caching=XXXX</vlc:option>` value that is sent to VLC Media Player via the xspf playlist feature");
+		lblVlcNetworkCaching.setBounds(0, 27, 150, 15);
+		lblVlcNetworkCaching.setText("VLC Network Caching:");
+		
+		this.vlcNetworkCaching = new Spinner(contents1, SWT.BORDER);
+		this.vlcNetworkCaching.setIncrement(250);
+		final Property<Boolean> deb1 = new Property<>();
+		this.vlcNetworkCaching.addModifyListener(new ModifyListener() {
+			@Override
+			public void modifyText(ModifyEvent e) {
+				if(deb1.getValue() == Boolean.TRUE) {
+					return;
+				}
+				deb1.setValue(Boolean.TRUE);
+				if(OptionsDialog.this.vlcNetworkCaching.getSelection() == 0) {
+					OptionsDialog.this.vlcNetworkCaching.setSelection(-1);
+				}
+				if(OptionsDialog.this.vlcNetworkCaching.getSelection() == 249) {
+					OptionsDialog.this.vlcNetworkCaching.setSelection(250);
+				}
+				JavaWebServer.VLC_NETWORK_CACHING_MILLIS = OptionsDialog.this.vlcNetworkCaching.getSelection();
+				deb1.setValue(Boolean.FALSE);
+			}
+		});
+		this.vlcNetworkCaching.setToolTipText("Set VLC Network Caching");
+		this.vlcNetworkCaching.setMaximum(10000);
+		this.vlcNetworkCaching.setMinimum(-1);
+		this.vlcNetworkCaching.setSelection(JavaWebServer.VLC_NETWORK_CACHING_MILLIS);
+		this.vlcNetworkCaching.setBounds(156, 27, 110, 21);
 		
 		Label lblServerListenPort = new Label(contents, SWT.NONE);
 		lblServerListenPort.setForeground(SWTResourceManager.getColor(SWT.COLOR_RED));
