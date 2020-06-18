@@ -129,6 +129,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
 
 /** The main Server class */
+@SuppressWarnings("javadoc")
 public final class JavaWebServer {//TODO Implement per-folder background color/images/textures with configurable settings(image repeats, size, etc.) based on pure HTML
 	//TODO Implement per-folder default files, like with domains(configurable on the folder administration page)
 	//TODO Go through and read all of the old TODO's and actually do them you lazy bum <--
@@ -193,7 +194,7 @@ public final class JavaWebServer {//TODO Implement per-folder background color/i
 	/** The author of this server software. */
 	public static final String APPLICATION_AUTHOR = "Brian_Entei";
 	
-	private static final String COPYRIGHT_SYMBOL = new String("\u00A9".getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8);
+	private static final String COPYRIGHT_SYMBOL = "\u00A9";
 	
 	/** The legal notice that is printed to the console. */
 	public static final String TERMINAL_NOTICE = new String((JavaWebServer.APPLICATION_NAME + " v." + JavaWebServer.APPLICATION_VERSION + " Copyright " + COPYRIGHT_SYMBOL + " " + JavaWebServer.COPYRIGHT_YEAR + " " + JavaWebServer.APPLICATION_AUTHOR + "\nThis program comes with ABSOLUTELY NO WARRANTY.\nThis is free software, and you are welcome to redistribute it.\n\nFor help with command usage, type 'help' and press enter.\n").getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8);
@@ -752,104 +753,104 @@ public final class JavaWebServer {//TODO Implement per-folder background color/i
 				saveOptionsToFile(false);
 			}
 			if(optionsFile.exists()) {
-				BufferedReader br = new BufferedReader(new FileReader(optionsFile));
-				while(br.ready()) {
-					String line = br.readLine();
-					String[] Args = line.split("=");
-					for(int i = 0; i < Args.length;) {
-						if((i + 1) < Args.length) {
-							String key = Args[i].trim();
-							i++;
-							String value = Args[i].trim();
-							if(!key.isEmpty() && !value.isEmpty()) {
-								printlnDebug(key + "=" + (key.toLowerCase().contains("password") ? "********" : value));
-								if(key.equalsIgnoreCase("homedirectory")) {
-									//if(value.startsWith(".")) {
-									//	value = FilenameUtils.normalize(rootDir.getAbsolutePath() + File.separatorChar + value.substring(1));
-									//}
-									homeDirectory = new File(value);
-									if(!homeDirectory.exists()) {
-										homeDirectory.mkdirs();
-									}
-									PrintUtil.println("Set home directory to: \"" + homeDirectory.getAbsolutePath() + "\"!");
-								} else if(key.equalsIgnoreCase("calculatedirectorysizes")) {
-									calculateDirectorySizes = Boolean.valueOf(value).booleanValue();
-									PrintUtil.println("Set option \"calculateDirectorySizes\" to \"" + calculateDirectorySizes + "\"!");
-								} else if(key.equalsIgnoreCase("directoryPageFontFace")) {
-									defaultFontFace = value;
-									PrintUtil.println("Set option \"directoryPageFontFace\" to \"" + defaultFontFace + "\"!");
-								} else if(key.equalsIgnoreCase("phpExeFilePath")) {
-									PhpResult.phpExeFilePath = value;
-									PrintUtil.println("Set the main PHP executable file path to \"" + PhpResult.phpExeFilePath + "\"!");
-								} else if(key.equalsIgnoreCase("requestTimeout")) {
-									final int oldRequestTimeout = requestTimeout;
-									try {
-										requestTimeout = Integer.valueOf(value).intValue();
-										if(requestTimeout < 0 || requestTimeout > 120000) {
-											PrintUtil.printErrln("Option \"requestTimeout\" was not set to an acceptable value(must be between 0 and 120000): " + requestTimeout);
+				try(BufferedReader br = new BufferedReader(new FileReader(optionsFile))) {
+					while(br.ready()) {
+						String line = br.readLine();
+						String[] Args = line.split("=");
+						for(int i = 0; i < Args.length;) {
+							if((i + 1) < Args.length) {
+								String key = Args[i].trim();
+								i++;
+								String value = Args[i].trim();
+								if(!key.isEmpty() && !value.isEmpty()) {
+									printlnDebug(key + "=" + (key.toLowerCase().contains("password") ? "********" : value));
+									if(key.equalsIgnoreCase("homedirectory")) {
+										//if(value.startsWith(".")) {
+										//	value = FilenameUtils.normalize(rootDir.getAbsolutePath() + File.separatorChar + value.substring(1));
+										//}
+										homeDirectory = new File(value);
+										if(!homeDirectory.exists()) {
+											homeDirectory.mkdirs();
+										}
+										PrintUtil.println("Set home directory to: \"" + homeDirectory.getAbsolutePath() + "\"!");
+									} else if(key.equalsIgnoreCase("calculatedirectorysizes")) {
+										calculateDirectorySizes = Boolean.valueOf(value).booleanValue();
+										PrintUtil.println("Set option \"calculateDirectorySizes\" to \"" + calculateDirectorySizes + "\"!");
+									} else if(key.equalsIgnoreCase("directoryPageFontFace")) {
+										defaultFontFace = value;
+										PrintUtil.println("Set option \"directoryPageFontFace\" to \"" + defaultFontFace + "\"!");
+									} else if(key.equalsIgnoreCase("phpExeFilePath")) {
+										PhpResult.phpExeFilePath = value;
+										PrintUtil.println("Set the main PHP executable file path to \"" + PhpResult.phpExeFilePath + "\"!");
+									} else if(key.equalsIgnoreCase("requestTimeout")) {
+										final int oldRequestTimeout = requestTimeout;
+										try {
+											requestTimeout = Integer.valueOf(value).intValue();
+											if(requestTimeout < 0 || requestTimeout > 120000) {
+												PrintUtil.printErrln("Option \"requestTimeout\" was not set to an acceptable value(must be between 0 and 120000): " + requestTimeout);
+												requestTimeout = oldRequestTimeout;
+											} else {
+												PrintUtil.println("Set the server's request timeout to \"" + (requestTimeout / 1000L) + "\" seconds!");
+											}
+										} catch(NumberFormatException ignored) {
+											PrintUtil.printErrln("Option \"requestTimeout\" was not set to a valid long value: " + value);
 											requestTimeout = oldRequestTimeout;
-										} else {
-											PrintUtil.println("Set the server's request timeout to \"" + (requestTimeout / 1000L) + "\" seconds!");
 										}
-									} catch(NumberFormatException ignored) {
-										PrintUtil.printErrln("Option \"requestTimeout\" was not set to a valid long value: " + value);
-										requestTimeout = oldRequestTimeout;
-									}
-								} else if(key.equalsIgnoreCase("overrideThreadPoolSize")) {
-									final int oldOverrideThreadPoolSize = overrideThreadPoolSize;
-									try {
-										overrideThreadPoolSize = Integer.valueOf(value).intValue();
-										if(overrideThreadPoolSize < 0 && overrideThreadPoolSize != -1) {
-											PrintUtil.printErrln("Option \"overrideThreadPoolSize\" was not set to an acceptable value(must be greater than zero.): " + overrideThreadPoolSize);
+									} else if(key.equalsIgnoreCase("overrideThreadPoolSize")) {
+										final int oldOverrideThreadPoolSize = overrideThreadPoolSize;
+										try {
+											overrideThreadPoolSize = Integer.valueOf(value).intValue();
+											if(overrideThreadPoolSize < 0 && overrideThreadPoolSize != -1) {
+												PrintUtil.printErrln("Option \"overrideThreadPoolSize\" was not set to an acceptable value(must be greater than zero.): " + overrideThreadPoolSize);
+												overrideThreadPoolSize = oldOverrideThreadPoolSize;
+											} else if(overrideThreadPoolSize != -1) {
+												updateThreadPoolSizes();
+												PrintUtil.println("Set the server's thread pool size to \"" + overrideThreadPoolSize + "\"!");
+											} else {
+												PrintUtil.println("Left the server's thread pool size set to the system-dependent default of 1000 times the number of available processors as listed above.");
+											}
+										} catch(NumberFormatException ignored) {
+											PrintUtil.printErrln("Option \"overrideThreadPoolSize\" was not set to a valid integer value: " + value);
 											overrideThreadPoolSize = oldOverrideThreadPoolSize;
-										} else if(overrideThreadPoolSize != -1) {
-											updateThreadPoolSizes();
-											PrintUtil.println("Set the server's thread pool size to \"" + overrideThreadPoolSize + "\"!");
-										} else {
-											PrintUtil.println("Left the server's thread pool size set to the system-dependent default of 1000 times the number of available processors as listed above.");
 										}
-									} catch(NumberFormatException ignored) {
-										PrintUtil.printErrln("Option \"overrideThreadPoolSize\" was not set to a valid integer value: " + value);
-										overrideThreadPoolSize = oldOverrideThreadPoolSize;
-									}
-								} else if(key.equalsIgnoreCase("VLC_NETWORK_CACHING_MILLIS")) {
-									final int oldVLCNetworkCachingMillis = VLC_NETWORK_CACHING_MILLIS;
-									try {
-										VLC_NETWORK_CACHING_MILLIS = Integer.valueOf(value).intValue();
-										if(VLC_NETWORK_CACHING_MILLIS != -1 && (VLC_NETWORK_CACHING_MILLIS < 0 || VLC_NETWORK_CACHING_MILLIS > 10000)) {
-											PrintUtil.printErrln("Option \"VLC_NETWORK_CACHING_MILLIS\" was not set to an acceptable value(must be greater than five-hundred[500] and less than ten-thousand[10000].): " + VLC_NETWORK_CACHING_MILLIS);
+									} else if(key.equalsIgnoreCase("VLC_NETWORK_CACHING_MILLIS")) {
+										final int oldVLCNetworkCachingMillis = VLC_NETWORK_CACHING_MILLIS;
+										try {
+											VLC_NETWORK_CACHING_MILLIS = Integer.valueOf(value).intValue();
+											if(VLC_NETWORK_CACHING_MILLIS != -1 && (VLC_NETWORK_CACHING_MILLIS < 0 || VLC_NETWORK_CACHING_MILLIS > 10000)) {
+												PrintUtil.printErrln("Option \"VLC_NETWORK_CACHING_MILLIS\" was not set to an acceptable value(must be greater than five-hundred[500] and less than ten-thousand[10000].): " + VLC_NETWORK_CACHING_MILLIS);
+												VLC_NETWORK_CACHING_MILLIS = oldVLCNetworkCachingMillis;
+											} else {
+												PrintUtil.println("Set option \"VLC_NETWORK_CACHING_MILLIS\" to \"" + VLC_NETWORK_CACHING_MILLIS + (VLC_NETWORK_CACHING_MILLIS == -1 ? "(Disabled)" : "") + "\"!");
+											}
+										} catch(NumberFormatException ignored) {
+											PrintUtil.printErrln("Option \"VLC_NETWORK_CACHING_MILLIS\" was not set to a valid integer value: " + value);
 											VLC_NETWORK_CACHING_MILLIS = oldVLCNetworkCachingMillis;
-										} else {
-											PrintUtil.println("Set option \"VLC_NETWORK_CACHING_MILLIS\" to \"" + VLC_NETWORK_CACHING_MILLIS + (VLC_NETWORK_CACHING_MILLIS == -1 ? "(Disabled)" : "") + "\"!");
 										}
-									} catch(NumberFormatException ignored) {
-										PrintUtil.printErrln("Option \"VLC_NETWORK_CACHING_MILLIS\" was not set to a valid integer value: " + value);
-										VLC_NETWORK_CACHING_MILLIS = oldVLCNetworkCachingMillis;
-									}
-								} else if(key.equalsIgnoreCase("listenPort")) {
-									final int oldListen_Port = listen_port;
-									try {
-										listen_port = Integer.valueOf(value).intValue();
-										if(listen_port < 0 || listen_port > 65535) {
-											PrintUtil.printErrln("Option \"listenPort\" was not set to a valid port number(must be between 0 and 65535): " + listen_port);
+									} else if(key.equalsIgnoreCase("listenPort")) {
+										final int oldListen_Port = listen_port;
+										try {
+											listen_port = Integer.valueOf(value).intValue();
+											if(listen_port < 0 || listen_port > 65535) {
+												PrintUtil.printErrln("Option \"listenPort\" was not set to a valid port number(must be between 0 and 65535): " + listen_port);
+												listen_port = oldListen_Port;
+											} else {
+												PrintUtil.println("Set the server's listening port to \"" + listen_port + "\"!");
+											}
+										} catch(NumberFormatException ignored) {
+											PrintUtil.printErrln("Option \"listenPort\" was not set to a valid integer value: " + value);
 											listen_port = oldListen_Port;
-										} else {
-											PrintUtil.println("Set the server's listening port to \"" + listen_port + "\"!");
 										}
-									} catch(NumberFormatException ignored) {
-										PrintUtil.printErrln("Option \"listenPort\" was not set to a valid integer value: " + value);
-										listen_port = oldListen_Port;
+									} else if(key.equalsIgnoreCase("enableConsoleLogging")) {
+										enableConsoleLogging = Boolean.valueOf(value).booleanValue();
+										PrintUtil.println("Set option \"enableConsoleLogging\" to \"" + enableConsoleLogging + "\"!");
 									}
-								} else if(key.equalsIgnoreCase("enableConsoleLogging")) {
-									enableConsoleLogging = Boolean.valueOf(value).booleanValue();
-									PrintUtil.println("Set option \"enableConsoleLogging\" to \"" + enableConsoleLogging + "\"!");
 								}
 							}
+							i++;
 						}
-						i++;
 					}
 				}
-				br.close();
 			}
 			loadSSLOptionsFromFile();
 			loadAdminOptionsFromFile();
@@ -875,54 +876,54 @@ public final class JavaWebServer {//TODO Implement per-folder background color/i
 				saveSSLOptionsToFile();
 			}
 			if(optionsFile.exists()) {
-				BufferedReader br = new BufferedReader(new FileReader(optionsFile));
-				while(br.ready()) {
-					String line = br.readLine();
-					String[] Args = line.split("=");
-					for(int i = 0; i < Args.length;) {
-						if((i + 1) < Args.length) {
-							String key = Args[i].trim();
-							i++;
-							String value = Args[i].trim();
-							if(!key.isEmpty() && !value.isEmpty()) {
-								printlnDebug(key + "=" + (key.equalsIgnoreCase("storePassword") ? "********" : value));
-								if(key.equalsIgnoreCase("enableSSL")) {
-									enableSSLThread = Boolean.valueOf(value).booleanValue();
-									PrintUtil.println("Set SSL functionality to \"" + (enableSSLThread ? "Enabled" : "Disabled") + "\"!");
-								} else if(key.equalsIgnoreCase("sslListenPort")) {
-									final int oldListen_Port = ssl_listen_port;
-									try {
-										ssl_listen_port = Integer.valueOf(value).intValue();
-										if(ssl_listen_port < 0 || ssl_listen_port > 65535) {
-											PrintUtil.printErrln("Option \"sslListenPort\" was not set to a valid port number(must be between 0 and 65535): " + ssl_listen_port);
-											ssl_listen_port = oldListen_Port;
-										} else {
-											if(ssl_listen_port == listen_port || ssl_listen_port == admin_listen_port) {
-												PrintUtil.printErrln("The SSL Listen Port was set to a port that is already assigned: " + value + "; defaulting to " + oldListen_Port + ".");
+				try(BufferedReader br = new BufferedReader(new FileReader(optionsFile))) {
+					while(br.ready()) {
+						String line = br.readLine();
+						String[] Args = line.split("=");
+						for(int i = 0; i < Args.length;) {
+							if((i + 1) < Args.length) {
+								String key = Args[i].trim();
+								i++;
+								String value = Args[i].trim();
+								if(!key.isEmpty() && !value.isEmpty()) {
+									printlnDebug(key + "=" + (key.equalsIgnoreCase("storePassword") ? "********" : value));
+									if(key.equalsIgnoreCase("enableSSL")) {
+										enableSSLThread = Boolean.valueOf(value).booleanValue();
+										PrintUtil.println("Set SSL functionality to \"" + (enableSSLThread ? "Enabled" : "Disabled") + "\"!");
+									} else if(key.equalsIgnoreCase("sslListenPort")) {
+										final int oldListen_Port = ssl_listen_port;
+										try {
+											ssl_listen_port = Integer.valueOf(value).intValue();
+											if(ssl_listen_port < 0 || ssl_listen_port > 65535) {
+												PrintUtil.printErrln("Option \"sslListenPort\" was not set to a valid port number(must be between 0 and 65535): " + ssl_listen_port);
 												ssl_listen_port = oldListen_Port;
 											} else {
-												PrintUtil.println("Set the server's ssl listening port to \"" + ssl_listen_port + "\"!");
+												if(ssl_listen_port == listen_port || ssl_listen_port == admin_listen_port) {
+													PrintUtil.printErrln("The SSL Listen Port was set to a port that is already assigned: " + value + "; defaulting to " + oldListen_Port + ".");
+													ssl_listen_port = oldListen_Port;
+												} else {
+													PrintUtil.println("Set the server's ssl listening port to \"" + ssl_listen_port + "\"!");
+												}
 											}
+										} catch(NumberFormatException ignored) {
+											PrintUtil.printErrln("Option \"sslListenPort\" was not set to a valid integer value: " + value);
+											ssl_listen_port = oldListen_Port;
 										}
-									} catch(NumberFormatException ignored) {
-										PrintUtil.printErrln("Option \"sslListenPort\" was not set to a valid integer value: " + value);
-										ssl_listen_port = oldListen_Port;
+									} else if(key.equalsIgnoreCase("sslStore_KeyOrTrust")) {
+										sslStore_KeyOrTrust = value.equalsIgnoreCase("key");
+									} else if(key.equalsIgnoreCase("storePath")) {
+										storePath = value;
+										PrintUtil.println("Set the SSL Store path to \"" + storePath + "\"!");
+									} else if(key.equalsIgnoreCase("storePassword")) {
+										storePassword = value;
+										PrintUtil.println("Set the SSL Store password to \"********\"!");
 									}
-								} else if(key.equalsIgnoreCase("sslStore_KeyOrTrust")) {
-									sslStore_KeyOrTrust = value.equalsIgnoreCase("key");
-								} else if(key.equalsIgnoreCase("storePath")) {
-									storePath = value;
-									PrintUtil.println("Set the SSL Store path to \"" + storePath + "\"!");
-								} else if(key.equalsIgnoreCase("storePassword")) {
-									storePassword = value;
-									PrintUtil.println("Set the SSL Store password to \"********\"!");
 								}
 							}
+							i++;
 						}
-						i++;
 					}
 				}
-				br.close();
 			}
 		} catch(Throwable e) {
 			e.printStackTrace();
@@ -937,52 +938,52 @@ public final class JavaWebServer {//TODO Implement per-folder background color/i
 				saveAdminOptionsToFile();
 			}
 			if(optionsFile.exists()) {
-				BufferedReader br = new BufferedReader(new FileReader(optionsFile));
-				while(br.ready()) {
-					String line = br.readLine();
-					String[] Args = line.split("=");
-					for(int i = 0; i < Args.length;) {
-						if((i + 1) < Args.length) {
-							String key = Args[i].trim();
-							i++;
-							String value = Args[i].trim();
-							if(!key.isEmpty() && !value.isEmpty()) {
-								printlnDebug(key + "=" + (key.equalsIgnoreCase("adminPassword") ? "********" : value));
-								if(key.equalsIgnoreCase("enableAdminInterface")) {
-									enableAdminInterface = Boolean.valueOf(value).booleanValue();
-									PrintUtil.println("Set option \"enableAdminInterface\" to \"" + enableAdminInterface + "\"!");
-								} else if(key.equalsIgnoreCase("adminListenPort")) {
-									final int oldListen_Port = admin_listen_port;
-									try {
-										admin_listen_port = Integer.valueOf(value).intValue();
-										if(admin_listen_port < 0 || admin_listen_port > 65535) {
-											PrintUtil.printErrln("Option \"adminListenPort\" was not set to a valid port number(must be between 0 and 65535): " + admin_listen_port);
-											admin_listen_port = oldListen_Port;
-										} else {
-											if(admin_listen_port == listen_port) {
-												PrintUtil.printErrln("The Server Administration listening port was set to a port that is already assigned: " + value + "; defaulting to " + oldListen_Port + ".");
+				try(BufferedReader br = new BufferedReader(new FileReader(optionsFile))) {
+					while(br.ready()) {
+						String line = br.readLine();
+						String[] Args = line.split("=");
+						for(int i = 0; i < Args.length;) {
+							if((i + 1) < Args.length) {
+								String key = Args[i].trim();
+								i++;
+								String value = Args[i].trim();
+								if(!key.isEmpty() && !value.isEmpty()) {
+									printlnDebug(key + "=" + (key.equalsIgnoreCase("adminPassword") ? "********" : value));
+									if(key.equalsIgnoreCase("enableAdminInterface")) {
+										enableAdminInterface = Boolean.valueOf(value).booleanValue();
+										PrintUtil.println("Set option \"enableAdminInterface\" to \"" + enableAdminInterface + "\"!");
+									} else if(key.equalsIgnoreCase("adminListenPort")) {
+										final int oldListen_Port = admin_listen_port;
+										try {
+											admin_listen_port = Integer.valueOf(value).intValue();
+											if(admin_listen_port < 0 || admin_listen_port > 65535) {
+												PrintUtil.printErrln("Option \"adminListenPort\" was not set to a valid port number(must be between 0 and 65535): " + admin_listen_port);
 												admin_listen_port = oldListen_Port;
 											} else {
-												PrintUtil.println("Set the Server Administration listening port to \"" + admin_listen_port + "\"!");
+												if(admin_listen_port == listen_port) {
+													PrintUtil.printErrln("The Server Administration listening port was set to a port that is already assigned: " + value + "; defaulting to " + oldListen_Port + ".");
+													admin_listen_port = oldListen_Port;
+												} else {
+													PrintUtil.println("Set the Server Administration listening port to \"" + admin_listen_port + "\"!");
+												}
 											}
+										} catch(NumberFormatException ignored) {
+											PrintUtil.printErrln("Option \"adminListenPort\" was not set to a valid integer value: " + value);
+											admin_listen_port = oldListen_Port;
 										}
-									} catch(NumberFormatException ignored) {
-										PrintUtil.printErrln("Option \"adminListenPort\" was not set to a valid integer value: " + value);
-										admin_listen_port = oldListen_Port;
+									} else if(key.equalsIgnoreCase("adminUsername")) {
+										adminUsername = value;
+										PrintUtil.println("Set the Server Administration username to \"" + adminUsername + "\"!");
+									} else if(key.equalsIgnoreCase("adminPassword")) {
+										adminPassword = value;
+										PrintUtil.println("Set the Server Administration password to \"********\"!");
 									}
-								} else if(key.equalsIgnoreCase("adminUsername")) {
-									adminUsername = value;
-									PrintUtil.println("Set the Server Administration username to \"" + adminUsername + "\"!");
-								} else if(key.equalsIgnoreCase("adminPassword")) {
-									adminPassword = value;
-									PrintUtil.println("Set the Server Administration password to \"********\"!");
 								}
 							}
+							i++;
 						}
-						i++;
 					}
 				}
-				br.close();
 			}
 		} catch(Throwable e) {
 			e.printStackTrace();
@@ -997,48 +998,48 @@ public final class JavaWebServer {//TODO Implement per-folder background color/i
 				saveProxyOptionsToFile();
 			}
 			if(optionsFile.exists()) {
-				BufferedReader br = new BufferedReader(new FileReader(optionsFile));
-				while(br.ready()) {
-					String line = br.readLine();
-					String[] Args = line.split("=");
-					for(int i = 0; i < Args.length;) {
-						if((i + 1) < Args.length) {
-							String key = Args[i].trim();
-							i++;
-							String value = Args[i].trim();
-							if(!key.isEmpty() && !value.isEmpty()) {
-								printlnDebug(key + "=" + (key.equalsIgnoreCase("proxyPassword") ? "********" : value));
-								if(key.equalsIgnoreCase("enableProxyServer")) {
-									enableProxyServer = Boolean.valueOf(value).booleanValue();
-									PrintUtil.println("Set the Server Proxy state to \"" + (enableProxyServer ? "Enabled" : "Disabled") + "\"!");
-								} else if(key.equalsIgnoreCase("sendProxyHeadersWithRequest")) {
-									sendProxyHeadersWithRequest = Boolean.valueOf(value).booleanValue();
-									PrintUtil.println("Set option \"sendProxyHeadersWithRequest\" to \"" + sendProxyHeadersWithRequest + "\"!");
-								} else if(key.equalsIgnoreCase("proxyRequiresAuthorization")) {
-									proxyRequiresAuthorization = Boolean.valueOf(value).booleanValue();
-									PrintUtil.println("Set option \"proxyRequiresAuthorization\" to \"" + proxyRequiresAuthorization + "\"!");
-								} else if(key.equalsIgnoreCase("proxyUsername")) {
-									proxyUsername = value;
-									PrintUtil.println("Set the Server Proxy username to \"" + proxyUsername + "\"!");
-								} else if(key.equalsIgnoreCase("proxyPassword")) {
-									proxyPassword = value;
-									PrintUtil.println("Set the Server Proxy password to \"********\"!");
-								} else if(key.equalsIgnoreCase("proxyTerminateDeadConnections")) {
-									proxyTerminateDeadConnections = Boolean.valueOf(value).booleanValue();
-									PrintUtil.println("Set Server Proxy parameter 'proxyTerminateDeadConnections' to \"" + proxyTerminateDeadConnections + "\"!");
-								} else if(key.equalsIgnoreCase("proxyTerminatePotentiallyDeadConnectionsWhenRequestTimeoutReached")) {
-									proxyTerminatePotentiallyDeadConnectionsWhenRequestTimeoutReached = Boolean.valueOf(value).booleanValue();
-									PrintUtil.println("Set Server Proxy parameter 'proxyTerminatePotentiallyDeadConnectionsWhenRequestTimeoutReached' to \"" + proxyTerminatePotentiallyDeadConnectionsWhenRequestTimeoutReached + "\"!");
-								} else if(key.equalsIgnoreCase("proxyEnableSinBinConnectionLimit")) {
-									proxyEnableSinBinConnectionLimit = Boolean.valueOf(value).booleanValue();
-									PrintUtil.println("Set Server Proxy password to \"********\"!");
+				try(BufferedReader br = new BufferedReader(new FileReader(optionsFile))) {
+					while(br.ready()) {
+						String line = br.readLine();
+						String[] Args = line.split("=");
+						for(int i = 0; i < Args.length;) {
+							if((i + 1) < Args.length) {
+								String key = Args[i].trim();
+								i++;
+								String value = Args[i].trim();
+								if(!key.isEmpty() && !value.isEmpty()) {
+									printlnDebug(key + "=" + (key.equalsIgnoreCase("proxyPassword") ? "********" : value));
+									if(key.equalsIgnoreCase("enableProxyServer")) {
+										enableProxyServer = Boolean.valueOf(value).booleanValue();
+										PrintUtil.println("Set the Server Proxy state to \"" + (enableProxyServer ? "Enabled" : "Disabled") + "\"!");
+									} else if(key.equalsIgnoreCase("sendProxyHeadersWithRequest")) {
+										sendProxyHeadersWithRequest = Boolean.valueOf(value).booleanValue();
+										PrintUtil.println("Set option \"sendProxyHeadersWithRequest\" to \"" + sendProxyHeadersWithRequest + "\"!");
+									} else if(key.equalsIgnoreCase("proxyRequiresAuthorization")) {
+										proxyRequiresAuthorization = Boolean.valueOf(value).booleanValue();
+										PrintUtil.println("Set option \"proxyRequiresAuthorization\" to \"" + proxyRequiresAuthorization + "\"!");
+									} else if(key.equalsIgnoreCase("proxyUsername")) {
+										proxyUsername = value;
+										PrintUtil.println("Set the Server Proxy username to \"" + proxyUsername + "\"!");
+									} else if(key.equalsIgnoreCase("proxyPassword")) {
+										proxyPassword = value;
+										PrintUtil.println("Set the Server Proxy password to \"********\"!");
+									} else if(key.equalsIgnoreCase("proxyTerminateDeadConnections")) {
+										proxyTerminateDeadConnections = Boolean.valueOf(value).booleanValue();
+										PrintUtil.println("Set Server Proxy parameter 'proxyTerminateDeadConnections' to \"" + proxyTerminateDeadConnections + "\"!");
+									} else if(key.equalsIgnoreCase("proxyTerminatePotentiallyDeadConnectionsWhenRequestTimeoutReached")) {
+										proxyTerminatePotentiallyDeadConnectionsWhenRequestTimeoutReached = Boolean.valueOf(value).booleanValue();
+										PrintUtil.println("Set Server Proxy parameter 'proxyTerminatePotentiallyDeadConnectionsWhenRequestTimeoutReached' to \"" + proxyTerminatePotentiallyDeadConnectionsWhenRequestTimeoutReached + "\"!");
+									} else if(key.equalsIgnoreCase("proxyEnableSinBinConnectionLimit")) {
+										proxyEnableSinBinConnectionLimit = Boolean.valueOf(value).booleanValue();
+										PrintUtil.println("Set Server Proxy password to \"********\"!");
+									}
 								}
 							}
+							i++;
 						}
-						i++;
 					}
 				}
-				br.close();
 			}
 		} catch(Throwable e) {
 			e.printStackTrace();
@@ -2323,7 +2324,6 @@ public final class JavaWebServer {//TODO Implement per-folder background color/i
 			PrintUtil.printToConsole();
 			PrintUtil.printErrToConsole();
 			while(serverActive) {
-				@SuppressWarnings("resource")
 				final Socket s = socket.accept();
 				if(!serverActive) {
 					try {
@@ -2436,7 +2436,7 @@ public final class JavaWebServer {//TODO Implement per-folder background color/i
 									REUSE.checkStatusCode();
 								}
 								wasProxyRequest = result.wasProxyRequest();
-								if(!wasProxyRequest) {
+								if(!wasProxyRequest && printLogs) {
 									printRequestLogsAndGC(result);
 									printLogs = false;
 								}
